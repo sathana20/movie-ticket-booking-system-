@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ movie.title }} - Shows{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>{{ movie.title }}</h2>
+</div>
+<p style="color:#666;">{{ movie.description }}</p>
+
+{% if shows %}
+  {% for show in shows %}
+  <div class="show-card">
+    <div>
+      <div class="theatre">{{ show.theatre_name }}</div>
+      <div class="time">{{ show.show_time.strftime('%d %b %Y, %I:%M %p') }} • ₹{{ show.price }}</div>
+    </div>
+    <a href="{{ url_for('select_seats', show_id=show.id) }}" class="btn">Select Seats</a>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty-state">No shows scheduled for this movie yet.</div>
+{% endif %}
+{% endblock %}

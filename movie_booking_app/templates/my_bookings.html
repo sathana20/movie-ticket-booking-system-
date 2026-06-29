@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}My Bookings{% endblock %}
+{% block content %}
+<div class="page-header"><h2>My Bookings</h2></div>
+
+{% if bookings %}
+<table>
+  <thead>
+    <tr>
+      <th>Booking ID</th>
+      <th>Movie</th>
+      <th>Theatre</th>
+      <th>Show Time</th>
+      <th>Amount</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for b in bookings %}
+    <tr>
+      <td>#{{ b.id }}</td>
+      <td>{{ b.title }}</td>
+      <td>{{ b.theatre_name }}</td>
+      <td>{{ b.show_time.strftime('%d %b %Y, %I:%M %p') }}</td>
+      <td>₹{{ b.total_amount }}</td>
+      <td>{{ b.status }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state">You haven't booked any tickets yet.</div>
+{% endif %}
+{% endblock %}

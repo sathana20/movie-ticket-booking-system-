@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Booking Confirmed{% endblock %}
+{% block content %}
+<div class="confirmation-card">
+  <div class="check">✅</div>
+  <h2>Booking Confirmed!</h2>
+  <div class="ticket-id">Booking ID: #{{ booking.id }}</div>
+  <p><strong>{{ booking.title }}</strong></p>
+  <p>{{ booking.theatre_name }}</p>
+  <p>{{ booking.show_time.strftime('%d %b %Y, %I:%M %p') }}</p>
+  <p>Seats: {{ seat_labels | join(', ') }}</p>
+  <div class="price-tag">₹{{ booking.total_amount }}</div>
+  <a href="{{ url_for('my_bookings') }}" class="btn">View My Bookings</a>
+  <a href="{{ url_for('browse_movies') }}" class="btn btn-outline" style="margin-left:8px;">Book More</a>
+</div>
+{% endblock %}

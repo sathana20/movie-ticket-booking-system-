@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Select Seats{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>{{ show.title }} <span style="color:#777;font-size:0.9rem;">— {{ show.theatre_name }}</span></h2>
+</div>
+<p style="text-align:center; color:#777;">{{ show.show_time.strftime('%d %b %Y, %I:%M %p') }} • ₹{{ show.price }} per seat</p>
+
+<div class="screen-label">SCREEN THIS WAY</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-box" style="background:#fff;"></div> Available</div>
+  <div class="legend-item"><div class="legend-box" style="background:#e23744;"></div> Selected</div>
+  <div class="legend-item"><div class="legend-box" style="background:#b0b0b0;"></div> Booked</div>
+</div>
+
+<form id="bookingForm" method="POST" action="{{ url_for('book_seats', show_id=show.id) }}">
+  <div class="seat-map" id="seatMap">
+    {% set rows = {} %}
+    {% for seat in seats %}
+      {% set row_letter = seat.seat_label[0] %}
+      {% if row_letter not in rows %}{% set _ = rows.update({row_letter: []}) %}{% endif %}
+      {% set _ = rows[row_letter].append(seat) %}
+    {% endfor %}
+
+    {% for row_letter, row_seats in rows.items() %}
+    <div class="seat-row">
+      <div class="row-label">{{ row_letter }}</div>
+      {% for seat in row_seats %}
+        <div class="seat {{ 'booked' if seat.status == 'BOOKED' else '' }}"
+             data-seat-id="{{ seat.id }}"
+             onclick="toggleSeat(this)">
+          {{ seat.seat_label[1:] }}
+        </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="booking-summary">
+    <div>Selected Seats: <strong id="seatList">None</strong></div>
+    <div class="price-tag" id="totalPrice">₹0</div>
+    <input type="hidden" name="seat_ids" id="seatIdsInput">
+    <button type="submit" class="btn btn-block" id="confirmBtn" disabled>Confirm Booking</button>
+  </div>
+</form>
+
+<script>
+  const pricePerSeat = {{ show.price }};
+  let selected = [];
+
+  function toggleSeat(el) {
+    if (el.classList.contains('booked')) return;
+    const seatId = el.getAttribute('data-seat-id');
+    if (el.classList.contains('selected')) {
+      el.classList.remove('selected');
+      selected = selected.filter(id => id !== seatId);
+    } else {
+      el.classList.add('selected');
+      selected.push(seatId);
+    }
+    updateSummary();
+  }
+
+  function updateSummary() {
+    document.getElementById('seatList').innerText = selected.length ? selected.length + ' seat(s)' : 'None';
+    document.getElementById('totalPrice').innerText = '₹' + (selected.length * pricePerSeat).toFixed(2);
+    document.getElementById('confirmBtn').disabled = selected.length === 0;
+  }
+
+  document.getElementById('bookingForm').addEventListener('submit', function () {
+    // Convert seat ids array into multiple hidden inputs named seat_ids
+    const container = document.getElementById('seatIdsInput');
+    container.remove();
+    selected.forEach(id => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'seat_ids';
+      input.value = id;
+      this.appendChild(input);
+    });
+  });
+</script>
+{% endblock %}

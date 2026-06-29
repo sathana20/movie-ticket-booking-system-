@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Movies{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>Now Showing</h2>
+</div>
+
+{% if movies %}
+<div class="movie-grid">
+  {% for movie in movies %}
+  <a href="{{ url_for('movie_shows', movie_id=movie.id) }}" class="movie-card">
+    {% if movie.poster_filename %}
+      <img class="poster" src="{{ url_for('static', filename='uploads/' + movie.poster_filename) }}" alt="{{ movie.title }}">
+    {% else %}
+      <div class="poster">No Poster</div>
+    {% endif %}
+    <div class="movie-info">
+      <h3>{{ movie.title }}</h3>
+      <div class="meta">{{ movie.genre or '' }} {% if movie.duration_minutes %}• {{ movie.duration_minutes }} min{% endif %}</div>
+      {% if movie.language %}<span class="badge">{{ movie.language }}</span>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">No movies available right now. Check back soon!</div>
+{% endif %}
+{% endblock %}

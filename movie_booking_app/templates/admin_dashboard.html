@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>Admin Dashboard</h2>
+  <a href="{{ url_for('add_movie') }}" class="btn">+ Add Movie</a>
+</div>
+
+{% if movies %}
+<table>
+  <thead>
+    <tr>
+      <th>Poster</th>
+      <th>Title</th>
+      <th>Genre</th>
+      <th>Duration</th>
+      <th>Shows</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for movie in movies %}
+    <tr>
+      <td>
+        {% if movie.poster_filename %}
+          <img src="{{ url_for('static', filename='uploads/' + movie.poster_filename) }}" style="width:50px;height:70px;object-fit:cover;border-radius:4px;">
+        {% else %}
+          —
+        {% endif %}
+      </td>
+      <td>{{ movie.title }}</td>
+      <td>{{ movie.genre or '—' }}</td>
+      <td>{{ movie.duration_minutes }} min</td>
+      <td>{{ movie.show_count }}</td>
+      <td>
+        <a href="{{ url_for('add_show', movie_id=movie.id) }}" class="action-link">+ Add Show</a>
+        <form method="POST" action="{{ url_for('delete_movie', movie_id=movie.id) }}" style="display:inline;" onsubmit="return confirm('Delete this movie and all its shows?');">
+          <button type="submit" class="action-link" style="background:none;border:none;cursor:pointer;padding:0;">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state">No movies added yet. Click "+ Add Movie" to get started.</div>
+{% endif %}
+{% endblock %}

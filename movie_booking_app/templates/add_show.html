@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Add Show{% endblock %}
+{% block content %}
+<div class="form-card">
+  <h2>Add Show for "{{ movie.title }}"</h2>
+  <form method="POST">
+    <div class="form-group">
+      <label>Theatre Name</label>
+      <input type="text" name="theatre_name" required placeholder="PVR Cinemas, Mall Road">
+    </div>
+    <div class="form-group">
+      <label>Show Date & Time</label>
+      <input type="datetime-local" name="show_time" required>
+    </div>
+    <div class="form-group">
+      <label>Rows (A, B, C...)</label>
+      <input type="number" name="total_rows" value="5" min="1" max="20" required>
+    </div>
+    <div class="form-group">
+      <label>Seats per Row</label>
+      <input type="number" name="seats_per_row" value="10" min="1" max="30" required>
+    </div>
+    <div class="form-group">
+      <label>Ticket Price (₹)</label>
+      <input type="number" name="price" step="0.01" min="0" required>
+    </div>
+    <button type="submit" class="btn btn-block">Add Show</button>
+  </form>
+</div>
+{% endblock %}
