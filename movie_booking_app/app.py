@@ -1,15 +1,4 @@
-"""
-app.py - Movie Ticket Booking System (BookMyShow-like)
-Stack: Python Flask + MySQL + HTML/CSS (Jinja2 templates)
 
-Run:
-    pip install -r requirements.txt
-    1) Import schema.sql into MySQL Workbench (creates movie_booking_db)
-    2) Update DB_CONFIG in db.py with your MySQL username/password
-    3) python app.py
-    4) Visit http://localhost:5000
-       Default admin login -> admin@cinema.com / admin123
-"""
 import os
 from datetime import datetime
 from functools import wraps
@@ -35,9 +24,6 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# ---------------------------------------------------------------
-# AUTH DECORATORS
-# ---------------------------------------------------------------
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -71,9 +57,7 @@ def forbidden(e):
     return render_template("error.html", message="Access forbidden for your role."), 403
 
 
-# ---------------------------------------------------------------
-# HOME -> redirect based on role
-# ---------------------------------------------------------------
+
 @app.route("/")
 def home():
     if "user" not in session:
@@ -83,9 +67,6 @@ def home():
     return redirect(url_for("browse_movies"))
 
 
-# ---------------------------------------------------------------
-# REGISTER
-# ---------------------------------------------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -123,9 +104,7 @@ def register():
     return render_template("register.html")
 
 
-# ---------------------------------------------------------------
-# LOGIN / LOGOUT
-# ---------------------------------------------------------------
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -159,9 +138,7 @@ def logout():
     return redirect(url_for("login"))
 
 
-# =================================================================
-# ADMIN ROUTES
-# =================================================================
+
 @app.route("/admin/dashboard")
 @admin_required
 def admin_dashboard():
@@ -290,9 +267,7 @@ def delete_movie(movie_id):
     return redirect(url_for("admin_dashboard"))
 
 
-# =================================================================
-# USER ROUTES
-# =================================================================
+
 @app.route("/movies")
 @login_required
 def browse_movies():
