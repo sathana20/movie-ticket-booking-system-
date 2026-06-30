@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Edit Show{% endblock %}
+{% block content %}
+<div class="form-card">
+  <h2>Edit Show — "{{ show.title }}"</h2>
+  <form method="POST">
+    <div class="form-group">
+      <label>Theatre Name</label>
+      <input type="text" name="theatre_name" value="{{ show.theatre_name }}" required>
+    </div>
+    <div class="form-group">
+      <label>Show Date & Time</label>
+      <input type="datetime-local" name="show_time" value="{{ show.show_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+    </div>
+    <div class="form-group">
+      <label>Ticket Price (₹)</label>
+      <input type="number" name="price" value="{{ show.price }}" step="0.01" min="0" required>
+    </div>
+    <p style="font-size:0.8rem;color:var(--text-muted);">
+      Seat layout ({{ show.total_rows }} rows × {{ show.seats_per_row }} seats) can't be changed
+      once a show is created, to avoid affecting existing bookings. Cancel and re-add the show
+      if you need a different layout.
+    </p>
+    <button type="submit" class="btn btn-block">Save Changes</button>
+  </form>
+</div>
+{% endblock %}

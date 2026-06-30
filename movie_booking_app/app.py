@@ -1,15 +1,4 @@
-"""
-app.py - Movie Ticket Booking System (BookMyShow-like)
-Stack: Python Flask + MySQL + HTML/CSS (Jinja2 templates)
 
-Run:
-    pip install -r requirements.txt
-    1) Import schema.sql into MySQL Workbench (creates movie_booking_db)
-    2) Update DB_CONFIG in db.py with your MySQL username/password
-    3) python app.py
-    4) Visit http://localhost:5000
-       Default admin login -> admin@cinema.com / admin123
-"""
 import os
 from datetime import datetime
 from functools import wraps
@@ -35,9 +24,7 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# ---------------------------------------------------------------
-# AUTH DECORATORS
-# ---------------------------------------------------------------
+
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -71,9 +58,7 @@ def forbidden(e):
     return render_template("error.html", message="Access forbidden for your role."), 403
 
 
-# ---------------------------------------------------------------
-# HOME -> redirect based on role
-# ---------------------------------------------------------------
+
 @app.route("/")
 def home():
     if "user" not in session:
@@ -83,9 +68,7 @@ def home():
     return redirect(url_for("browse_movies"))
 
 
-# ---------------------------------------------------------------
-# REGISTER
-# ---------------------------------------------------------------
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -123,9 +106,7 @@ def register():
     return render_template("register.html")
 
 
-# ---------------------------------------------------------------
-# LOGIN / LOGOUT
-# ---------------------------------------------------------------
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -159,9 +140,7 @@ def logout():
     return redirect(url_for("login"))
 
 
-# =================================================================
-# ADMIN ROUTES
-# =================================================================
+
 @app.route("/admin/dashboard")
 @admin_required
 def admin_dashboard():
@@ -290,9 +269,154 @@ def delete_movie(movie_id):
     return redirect(url_for("admin_dashboard"))
 
 
-# =================================================================
-# USER ROUTES
-# =================================================================
+@app.route("/admin/movies/<int:movie_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_movie(movie_id):
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+    try:
+        cur.execute("SELECT * FROM movies WHERE id = %s", (movie_id,))
+        movie = cur.fetchone()
+        if not movie:
+            abort(404)
+
+        if request.method == "POST":
+            title = request.form["title"].strip()
+            description = request.form.get("description", "").strip()
+            genre = request.form.get("genre", "").strip()
+            language = request.form.get("language", "").strip()
+            duration = request.form.get("duration_minutes") or None
+
+            poster_filename = movie["poster_filename"]
+            file = request.files.get("poster")
+            if file and file.filename and allowed_file(file.filename):
+                
+                if poster_filename:
+                    old_path = os.path.join(app.config["UPLOAD_FOLDER"], poster_filename)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                poster_filename = secure_filename(f"{datetime.now().timestamp()}_{file.filename}")
+                file.save(os.path.join(app.config["UPLOAD_FOLDER"], poster_filename))
+
+            cur2 = conn.cursor()
+            try:
+                cur2.execute(
+                    """UPDATE movies SET title=%s, description=%s, genre=%s,
+                       language=%s, duration_minutes=%s, poster_filename=%s
+                       WHERE id=%s""",
+                    (title, description, genre, language, duration, poster_filename, movie_id),
+                )
+                conn.commit()
+                flash("Movie updated successfully.", "success")
+            finally:
+                cur2.close()
+            return redirect(url_for("admin_dashboard"))
+
+    finally:
+        cur.close()
+        conn.close()
+
+    return render_template("edit_movie.html", movie=movie)
+
+
+@app.route("/admin/movies/<int:movie_id>/shows")
+@admin_required
+def manage_shows(movie_id):
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+    try:
+        cur.execute("SELECT * FROM movies WHERE id = %s", (movie_id,))
+        movie = cur.fetchone()
+        if not movie:
+            abort(404)
+        cur.execute(
+            "SELECT * FROM shows WHERE movie_id = %s ORDER BY show_time", (movie_id,)
+        )
+        shows = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
+    return render_template("manage_shows.html", movie=movie, shows=shows)
+
+
+@app.route("/admin/shows/<int:show_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_show(show_id):
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+    try:
+        cur.execute("""
+            SELECT s.*, m.title FROM shows s
+            JOIN movies m ON m.id = s.movie_id WHERE s.id = %s
+        """, (show_id,))
+        show = cur.fetchone()
+        if not show:
+            abort(404)
+
+       
+        if request.method == "POST":
+            theatre_name = request.form["theatre_name"].strip()
+            show_time = request.form["show_time"]
+            price = float(request.form["price"])
+
+            cur2 = conn.cursor()
+            try:
+                cur2.execute(
+                    "UPDATE shows SET theatre_name=%s, show_time=%s, price=%s WHERE id=%s",
+                    (theatre_name, show_time, price, show_id),
+                )
+                conn.commit()
+                flash("Show updated successfully.", "success")
+            finally:
+                cur2.close()
+            return redirect(url_for("manage_shows", movie_id=show["movie_id"]))
+
+    finally:
+        cur.close()
+        conn.close()
+
+    return render_template("edit_show.html", show=show)
+
+
+@app.route("/admin/shows/<int:show_id>/cancel", methods=["POST"])
+@admin_required
+def cancel_show(show_id):
+    """
+    Cancel a show. ACID-safe: in a single transaction we mark any
+    CONFIRMED bookings for this show as CANCELLED, then delete the
+    show itself (which cascades to its seats). Either both happen
+    or neither does.
+    """
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+    try:
+        conn.start_transaction()
+
+        cur.execute("SELECT * FROM shows WHERE id = %s FOR UPDATE", (show_id,))
+        show = cur.fetchone()
+        if not show:
+            conn.rollback()
+            abort(404)
+        movie_id = show["movie_id"]
+
+        cur.execute(
+            "UPDATE bookings SET status = 'CANCELLED' WHERE show_id = %s AND status = 'CONFIRMED'",
+            (show_id,),
+        )
+        cur.execute("DELETE FROM shows WHERE id = %s", (show_id,))  # cascades to seats
+        conn.commit()
+        flash("Show cancelled. Any existing bookings for this show were marked cancelled.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Failed to cancel show: {e}", "error")
+    finally:
+        cur.close()
+        conn.close()
+
+    return redirect(url_for("manage_shows", movie_id=movie_id))
+
+
+
 @app.route("/movies")
 @login_required
 def browse_movies():
