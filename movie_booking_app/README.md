@@ -65,7 +65,7 @@ A default admin account is auto-created on first run:
 - Password: `admin123`
 
 
-
+## Project structure
 movie_booking_app/
 ├── app.py                    # Flask app: routes for auth, admin, user
 ├── db.py                     # MySQL connection pool + admin seeding (gitignored — create from db.example.py)
@@ -87,10 +87,12 @@ movie_booking_app/
 
 ## How ACID is enforced
 
-**Atomicity**  `add_show`, `book_seats`, and `cancel_show` wrap multiple inserts/updates/deletes in `start_transaction()` / `commit()` / `rollback()` — all succeed or all fail. 
-**Consistency**  Foreign keys + `CHECK`/`ENUM` constraints in `schema.sql`; seat status only flips to `BOOKED` after the booking row is safely inserted; cancelling a show marks its bookings `CANCELLED` before deleting the show. 
-**Isolation**  `SELECT ... FOR UPDATE` locks the exact rows being modified (seats during booking, the show row during cancellation), so concurrent admins/users can't act on the same data at once. 
-**Durability**  Once `conn.commit()` returns, MySQL (InnoDB) guarantees the change survives a crash/restart. 
+| Property | Where |
+|---|---|
+| **Atomicity** | `add_show`, `book_seats`, and `cancel_show` wrap multiple inserts/updates/deletes in `start_transaction()` / `commit()` / `rollback()` — all succeed or all fail. |
+| **Consistency** | Foreign keys + `CHECK`/`ENUM` constraints in `schema.sql`; seat status only flips to `BOOKED` after the booking row is safely inserted; cancelling a show marks its bookings `CANCELLED` before deleting the show. |
+| **Isolation** | `SELECT ... FOR UPDATE` locks the exact rows being modified (seats during booking, the show row during cancellation), so concurrent admins/users can't act on the same data at once. |
+| **Durability** | Once `conn.commit()` returns, MySQL (InnoDB) guarantees the change survives a crash/restart. |
 
 ## Notes / next steps you may want to add
 
@@ -99,4 +101,3 @@ movie_booking_app/
 - Seat-hold timer (reserve seats for a few minutes during checkout)
 - Pagination/search/filtering on the movies page
 - User-side booking cancellation
-
