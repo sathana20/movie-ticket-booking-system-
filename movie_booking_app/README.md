@@ -66,24 +66,35 @@ A default admin account is auto-created on first run:
 
 
 ## Project structure
+```
 movie_booking_app/
-├── app.py                    # Flask app: routes for auth, admin, user
-├── db.py                     # MySQL connection pool + admin seeding (gitignored — create from db.example.py)
-├── db.example.py             # Template for db.py, safe to commit (no real credentials)
-├── schema.sql                # MySQL schema (import via Workbench)
+├── app.py
+├── db.py
+├── db.example.py
+├── schema.sql
 ├── requirements.txt
 ├── .gitignore
 ├── static/
-│   ├── css/style.css
-│   └── uploads/               # uploaded movie posters land here
+│   ├── css/
+│   │   └── style.css
+│   └── uploads/
 └── templates/
-├── base.html               # shared layout + navbar
-├── login.html / register.html
-├── admin_dashboard.html / add_movie.html / edit_movie.html
-├── add_show.html / edit_show.html / manage_shows.html
-├── movies.html / shows.html / seats.html
-├── booking_confirmation.html / my_bookings.html
-└── error.html
+    ├── base.html
+    ├── login.html
+    ├── register.html
+    ├── error.html
+    ├── admin_dashboard.html
+    ├── add_movie.html
+    ├── edit_movie.html
+    ├── add_show.html
+    ├── edit_show.html
+    ├── manage_shows.html
+    ├── movies.html
+    ├── shows.html
+    ├── seats.html
+    ├── booking_confirmation.html
+    └── my_bookings.html
+```
 
 ## How ACID is enforced
 
